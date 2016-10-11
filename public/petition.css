@@ -105,3 +105,28 @@ left:44%;
     color: red;
     top: 40%;
 }
+
+#register-form {
+    position: relative;
+    text-align: center;
+}
+
+.fields {
+    margin-bottom: 20px;
+}
+
+#footer-signed-in {
+    margin-top: 50px;
+    text-align: center;
+}
+
+#sign-in-botton {
+    cursor: pointer;
+
+}
+
+
+#login-form {
+    position: relative;
+    text-align: center;
+}

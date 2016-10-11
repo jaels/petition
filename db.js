@@ -32,6 +32,14 @@ exports.showSignatures = function (temp) {
     });
 };
 
+
+exports.insertUserData = function(first,last,email,hashedPassword) {
+
+    return getFromDb('INSERT into users(firstname, lastname, email, password) VALUES($1, $2, $3, $4) RETURNING id',[first,last,email,hashedPassword]).then(function(result) {
+        return result.rows[0].id;
+    });
+};
+
 function getFromDb(str, params) {
     return new Promise(function(resolve, reject) {
         client.query(str, params || [], function(err, result) {

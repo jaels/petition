@@ -5,6 +5,7 @@ var app = express();
 var hb = require('express-handlebars');
 var pg = require('pg');
 var cookieSession = require('cookie-session');
+var bcrypt = require('bcrypt');
 var client = new pg.Client('postgres://spicedling:036363976@localhost:5432/signatures');
 var db=require('./db.js');
 
@@ -28,7 +29,77 @@ app.use(cookieSession({
 app.use(express.static('./public'));
 
 app.get('/petition', function(req,res) {
-    if (req.session && req.session.signatureId) {
+    res.redirect('/petition/register');
+});
+
+app.get('/petition/register', function(req, res) {
+    res.render('register', {
+        layout:'main'
+    });
+});
+
+app.post('/registering', function(req,res) {
+    if((req.body.email).indexOf('@')>-1) {
+        var first = req.body.firstname;
+        var last = req.body.lastname;
+        var email = req.body.email;
+        var password = req.body.password;
+
+        if(first&&last&&email&&password) {
+
+            hashPassword(password).then(function(hash) {
+                var hashedPassword = hash;
+                db.insertUserData(first,last,email,hashedPassword).then
+                (function(id){
+                    req.session.user = {
+                        id:id,
+                        first:first,
+                        last:last
+                    };
+                });
+            });
+
+            res.redirect('/petition/form');
+
+        }
+
+    }
+    else res.send('Your email is not correct');
+
+});
+
+app.get('/petition/login', function(req,res) {
+    res.render('login', {
+        layout:'main'
+    });
+
+});
+
+app.post('/check-user', function(req,res) {
+
+    var requestedPassword = req.body.password;
+    var requestedEmail = req.body.email;
+    console.log(requestedEmail);
+
+    client.query('SELECT password FROM users WHERE email=$1', [requestedEmail], function(err, result) {
+        if (err) {
+            res.send('No such user, please register');
+        }
+        else {
+            var listedPassword = result.rows[0].password;
+            checkPassword(requestedPassword,listedPassword).then(function(doesMatch) {
+                if(doesMatch===true) {
+                    res.redirect('/petition/form');
+                }
+            });
+        }
+    });
+
+
+});
+
+app.get('/petition/form', function(req, res) {
+    if (req.session.signatureId) {
         var temp = req.session.signatureId;
         db.showSignatures(temp).then(function(signature) {
             db.countSigners().then(function(count) {
@@ -43,9 +114,12 @@ app.get('/petition', function(req,res) {
     else res.render('form', {
         layout: 'main'
     });
+
 });
 
-app.post('*', function(req,res) {
+
+
+app.post('/signing', function(req,res) {
     var first = req.body.firstname;
     var last = req.body.lastname;
     var sign = req.body.signature;
@@ -84,6 +158,42 @@ app.get('/petition/signers', function(req, res) {
         });
     });
 });
+
+
+
+function hashPassword(password) {
+    return new Promise(function(resolve, reject) {
+        bcrypt.genSalt(function(err, salt) {
+            if (err) {
+                reject(err);
+            }
+            bcrypt.hash(password, salt, function(err, hash) {
+                if (err) {
+                    reject(err);
+                }
+                else  {
+                    resolve(hash);
+                }
+            });
+        });
+    });
+}
+
+
+function checkPassword(requestedPassword, listedPassword) {
+    return new Promise(function(resolve, reject) {
+        bcrypt.compare(requestedPassword, listedPassword, function(err, doesMatch) {
+            if (err) {
+                reject(err);
+            }
+            else {
+                resolve(doesMatch);
+            }
+        });
+    });
+}
+
+
 
 
 app.listen(8080);
