@@ -1,0 +1,95 @@
+
+#canv {
+    border: 2px solid black;
+}
+
+body {
+    font-family: Arial Black;
+    background-color: #F0E68C;
+    margin-bottom: 10px;
+}
+
+#main-headline {
+    text-align: center;
+    color: red;
+    margin-bottom: 0px;
+
+}
+
+#stop-dubbing{
+    text-align:center;
+    font-size: 40px;
+}
+
+#sign-area {
+    position: relative;
+    text-align: center;
+    bottom:20px;
+}
+
+#canv {
+    position: relative;
+    left: 5%;
+}
+
+#explanation {
+    top: 10px;
+    font-size: 22px;
+    text-align: center;
+}
+
+#sign-area {
+    text-align: center;
+    margin-top: 20%;
+}
+
+#submit {
+    position: relative;
+    height:150px;
+    width:150px;
+    left: 80px;
+    bottom: 5px;
+}
+
+#thanks {
+    text-align: center;
+}
+
+#see-signers {
+    font-size: 20px;
+    position:relative;
+    color: blue;
+    cursor: pointer;
+    text-align: center;
+    left: 45%;
+    top:50px;
+
+}
+
+#signers-text {
+    text-align: center;
+}
+
+#signers {
+    position: relative;
+left:44%;
+}
+
+#existing-signature {
+    position: relative;
+    height: 100px;
+    width: 350px;
+    border: 2px solid black;
+    left: 38%;
+    top:20px;
+}
+
+#video{
+    position:absolute;
+    bottom:200px;
+    left:35%;
+}
+
+#already-signed-text{
+    text-align: center;
+}

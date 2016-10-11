@@ -31,5 +31,6 @@
     "express-handlebars": "^3.0.0",
     "express-session": "^1.14.1",
     "pg": "^6.1.0"
-  }
+  },
+  "devDependencies": {}
 }

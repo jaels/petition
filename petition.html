@@ -1,0 +1,35 @@
+
+
+<!doctype html>
+<html>
+
+<head>
+    <link rel="stylesheet" href="petition.css">
+    <title>petition</title>
+</head>
+<body>
+    <div id='main'>
+        <h1 id='main headline'> Petition! </h1>
+        <p id='main text'> sign this petition bla bla bla bla bl ablabla blabla blablaxcvxcv </p>
+    </div>
+    <div id="sign-area">
+        <form method="POST">
+            First name:
+            <input id='first-name' type="text" name="firstname">
+            Last name:
+            <input id='last-name' type="text" name="lastname">
+            <br><br>
+            <input id='signature' type='hidden' type='image' name='signature'>
+
+
+            <canvas id="canv" width="400" height="100">
+            </canvas>
+
+            <input id="submit" type="submit" value="Submit">
+        </form>
+
+    </div>
+
+    <script src = "canvas.js"></script>
+</body>
+</html>
