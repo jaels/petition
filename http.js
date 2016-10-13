@@ -1,5 +1,4 @@
 
-
 var express = require('express');
 var app = express();
 var hb = require('express-handlebars');
@@ -21,15 +20,20 @@ app.engine('handlebars', hb());
 app.set('view engine', 'handlebars');
 
 app.use(cookieSession({
-    secret: 'sign-cook',
-    maxAge: 1000 * 60
+    secret: 'ssss',
+    maxAge: 1000 * 60 * 60 * 24 * 14
 }));
+
+
 
 
 app.use(express.static('./public'));
 
 app.get('/petition', function(req,res) {
-    res.redirect('/petition/register');
+    if(!(req.session.user)) {
+        res.redirect('/petition/register');
+    }
+    else res.redirect('/petition/form');
 });
 
 app.get('/petition/register', function(req, res) {
@@ -54,15 +58,15 @@ app.post('/registering', function(req,res) {
                     req.session.user = {
                         id:id,
                         first:first,
-                        last:last
+                        last:last,
+                        email:email
                     };
+                    return req.session.user;
+                }).then(function() {
+                    res.redirect('/petition/form');
                 });
             });
-
-            res.redirect('/petition/form');
-
         }
-
     }
     else res.send('Your email is not correct');
 
@@ -81,26 +85,62 @@ app.post('/check-user', function(req,res) {
     var requestedEmail = req.body.email;
     console.log(requestedEmail);
 
-    client.query('SELECT password FROM users WHERE email=$1', [requestedEmail], function(err, result) {
+    client.query('SELECT * FROM users WHERE email=$1', [requestedEmail], function(err, result) {
         if (err) {
             res.send('No such user, please register');
         }
         else {
-            var listedPassword = result.rows[0].password;
-            checkPassword(requestedPassword,listedPassword).then(function(doesMatch) {
-                if(doesMatch===true) {
-                    res.redirect('/petition/form');
-                }
-            });
+            if (result.rows.length===0) {
+                res.send('No such user, please register');
+            }
+            else {
+                var listedPassword = result.rows[0].password;
+
+                req.session.user = {
+                    id:result.rows[0].id,
+                    first:result.rows[0].firstname,
+                    last:result.rows[0].lastname,
+                    email:result.rows[0].email
+                };
+                checkPassword(requestedPassword,listedPassword).then(function(doesMatch) {
+                    if(doesMatch===true) {
+
+                        client.query('SELECT * FROM signatures WHERE user_id=$1', [result.rows[0].id], function(err,result) {
+                            if (err) {
+                                console.log('Could not find signature');
+                            }
+
+                            else {
+                                if(result.rows.length===0) {
+                                    res.redirect('/petition/form');
+                                }
+
+                                else {
+                                    req.session.user.signId = result.rows[0].id;
+                                    // var temp=result.rows[0].id;
+                                    res.redirect('/petition/already-signed');
+                                }
+                            }
+                        });
+                    }
+
+                    else res.send('Wrong user or password');
+
+                });
+            }
         }
     });
-
-
 });
 
-app.get('/petition/form', function(req, res) {
-    if (req.session.signatureId) {
-        var temp = req.session.signatureId;
+
+
+app.get('/petition/already-signed', function(req,res) {
+    console.log('here is also ' + temp);
+    if(!(req.session.user)) {
+        res.redirect('/petition');
+    }
+    else {
+        var temp=req.session.user.signId;
         db.showSignatures(temp).then(function(signature) {
             db.countSigners().then(function(count) {
                 res.render('already_signed', {
@@ -110,6 +150,14 @@ app.get('/petition/form', function(req, res) {
                 });
             });
         });
+    }
+
+});
+
+
+app.get('/petition/form', function(req, res) {
+    if(!(req.session.user)) {
+        res.redirect('/petition');
     }
     else res.render('form', {
         layout: 'main'
@@ -123,9 +171,10 @@ app.post('/signing', function(req,res) {
     var first = req.body.firstname;
     var last = req.body.lastname;
     var sign = req.body.signature;
+    var userId = req.session.user.id;
 
     if(first && last && sign) {
-        db.insertData(first,last,sign).then(function(id) {
+        db.insertData(first,last,sign,userId).then(function(id) {
             req.session.signatureId = id;
             res.redirect('/petition/thanks');
 
@@ -138,27 +187,45 @@ app.post('/signing', function(req,res) {
 });
 
 app.get('/petition/thanks', function(req, res) {
-    db.countSigners().then(function(count) {
-        res.render('thanks', {
-            layout: 'main',
-            count:count
+    if(!(req.session.user)) {
+        res.redirect('/petition/register');
+    }
+    else {
+        db.countSigners().then(function(count) {
+            res.render('thanks', {
+                layout: 'main',
+                count:count
+            });
         });
-    });
+    }
 });
 
 app.get('/petition/signers', function(req, res) {
-    db.showSigners().then(function(results) {
-        res.render('signers', {
-            layout: 'main',
-            results:results
+    if(!(req.session.user)) {
+        res.redirect('/petition/register');
+    }
+    else {
+        db.showSigners().then(function(results) {
+            res.render('signers', {
+                layout: 'main',
+                results:results
+            });
+        }).catch(function() {
+            res.render('error' , {
+                layout: 'main'
+            });
         });
-    }).catch(function() {
-        res.render('error' , {
-            layout: 'main'
-        });
-    });
+    }
 });
 
+
+app.get('/petition/logout', function(req,res) {
+    req.session = null;
+    res.render('loged-out' , {
+        layout: 'main'
+    });
+
+});
 
 
 function hashPassword(password) {

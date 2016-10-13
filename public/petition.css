@@ -83,7 +83,7 @@ left:44%;
 #existing-signature {
     position: relative;
     height: 100px;
-    width: 350px;
+    width: 400px;
     border: 2px solid black;
     left: 38%;
     top:20px;
@@ -128,5 +128,24 @@ left:44%;
 
 #login-form {
     position: relative;
+    text-align: center;
+}
+
+#register-from-login{
+    position: relative;
+    text-align: center;
+    margin-top: 20px;
+    cursor: pointer;
+}
+
+#log-out {
+    position: absolute;
+    bottom: 70px;
+    left:20px;
+    cursor: pointer;
+
+}
+
+#loged-out {
     text-align: center;
 }

@@ -6,8 +6,8 @@ client.connect(function(err) {
     console.log(err);
 });
 
-exports.insertData = function(first,last,sign) {
-    return getFromDb('INSERT into signatures(firstname, lastname, signature) VALUES($1, $2, $3) RETURNING id',[first,last,sign]).then(function(result) {
+exports.insertData = function(first,last,sign,userId) {
+    return getFromDb('INSERT into signatures(firstname, lastname, signature,user_id) VALUES($1, $2, $3, $4) RETURNING id',[first,last,sign,userId]).then(function(result) {
         return result.rows[0].id;
     });
 };
