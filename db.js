@@ -40,6 +40,29 @@ exports.insertUserData = function(first,last,email,hashedPassword) {
     });
 };
 
+exports.insertMoreInfo = function(age,city,homepage,user_id) {
+    return getFromDb('INSERT into user_profiles(age, city, homepage, user_id) VALUES($1, $2, $3, $4) RETURNING id',[age, city, homepage,user_id]).then(function(result) {
+        return result.rows[0].id;
+    });
+};
+
+exports.getTheInfo = function() {
+
+    return new Promise(function(resolve, reject) {
+        client.query('SELECT signatures.firstname AS firstname, signatures.lastname As lastname, user_profiles.age AS age, user_profiles.city AS city, user_profiles.homepage AS homepage FROM signatures LEFT JOIN user_profiles ON signatures.user_id = user_profiles.user_id', function(err, result) {
+            if(err) {
+                reject(err);
+            }
+            else {
+                resolve(result);
+            }
+        })
+    });
+
+
+};
+
+
 function getFromDb(str, params) {
     return new Promise(function(resolve, reject) {
         client.query(str, params || [], function(err, result) {

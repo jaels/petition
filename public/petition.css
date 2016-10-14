@@ -77,7 +77,7 @@ body {
 
 #signers {
     position: relative;
-left:44%;
+left:40%;
 }
 
 #existing-signature {
@@ -147,5 +147,9 @@ left:44%;
 }
 
 #loged-out {
+    text-align: center;
+}
+
+#tell-more-text {
     text-align: center;
 }

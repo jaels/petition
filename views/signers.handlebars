@@ -4,7 +4,13 @@
 {{#each results}}
 <ul id="signers">
 <li>
-{{firstname}} {{lastname}}
+<a href="{{homepage}}">{{firstname}} {{lastname}}</a>
+
+{{#if age}} | Age: {{age}} {{/if}}
+
+{{#if city}} | City: <a href='/petition/signers/{{city}}'>{{city}}</a> {{/if}}
+
+
 </li>
 </ul>
 {{/each}}

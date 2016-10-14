@@ -37,6 +37,9 @@ app.get('/petition', function(req,res) {
 });
 
 app.get('/petition/register', function(req, res) {
+    // if(req.session.user) {
+    //     res.redirect('/petition/form');
+    // }
     res.render('register', {
         layout:'main'
     });
@@ -63,7 +66,7 @@ app.post('/registering', function(req,res) {
                     };
                     return req.session.user;
                 }).then(function() {
-                    res.redirect('/petition/form');
+                    res.redirect('/petition/more-info');
                 });
             });
         }
@@ -77,6 +80,26 @@ app.get('/petition/login', function(req,res) {
         layout:'main'
     });
 
+});
+
+
+app.get('/petition/more-info', function(req,res) {
+    res.render('more-info', {
+        layout:'main'
+    });
+
+
+});
+
+app.post('/petition/pre-form', function(req,res) {
+
+    var age = req.body.age;
+    var city = req.body.city;
+    var homepage = req.body.homepage;
+    var user_id = req.session.user.id;
+    console.log(user_id);
+    db.insertMoreInfo(age,city,homepage,user_id);
+    res.redirect('/petition/form');
 });
 
 app.post('/check-user', function(req,res) {
@@ -116,7 +139,7 @@ app.post('/check-user', function(req,res) {
                                 }
 
                                 else {
-                                    req.session.user.signId = result.rows[0].id;
+                                    req.session.user.signatureId = result.rows[0].id;
                                     // var temp=result.rows[0].id;
                                     res.redirect('/petition/already-signed');
                                 }
@@ -135,12 +158,11 @@ app.post('/check-user', function(req,res) {
 
 
 app.get('/petition/already-signed', function(req,res) {
-    console.log('here is also ' + temp);
     if(!(req.session.user)) {
         res.redirect('/petition');
     }
     else {
-        var temp=req.session.user.signId;
+        var temp=req.session.user.signatureId;
         db.showSignatures(temp).then(function(signature) {
             db.countSigners().then(function(count) {
                 res.render('already_signed', {
@@ -159,6 +181,9 @@ app.get('/petition/form', function(req, res) {
     if(!(req.session.user)) {
         res.redirect('/petition');
     }
+    else if(req.session.user.signatureId) {
+        res.redirect('/petition/already-signed');
+    }
     else res.render('form', {
         layout: 'main'
     });
@@ -175,7 +200,7 @@ app.post('/signing', function(req,res) {
 
     if(first && last && sign) {
         db.insertData(first,last,sign,userId).then(function(id) {
-            req.session.signatureId = id;
+            req.session.user.signatureId = id;
             res.redirect('/petition/thanks');
 
         }).catch(function() {
@@ -196,16 +221,40 @@ app.get('/petition/thanks', function(req, res) {
                 layout: 'main',
                 count:count
             });
-        });
-    }
+    }).catch(function(err) {
+        console.log(err);
+    })
+}
 });
+
+
+
+
+
+
+    // db.countSigners().then(function(count) {
+    //     console.log('getting info');
+    //     db.getTheInfo().then(function(result) {
+    //         var results=result.rows;
+    //         console.log(results);
+    //         res.render('thanks', {
+    //             layout: 'main',
+    //             count:count
+    //         });
+    // }).catch(function(err) {
+    //     console.log(err);
+    // });
+
+
 
 app.get('/petition/signers', function(req, res) {
     if(!(req.session.user)) {
         res.redirect('/petition/register');
     }
     else {
-        db.showSigners().then(function(results) {
+        db.getTheInfo().then(function(result) {
+            var results=result.rows;
+            console.log(results);
             res.render('signers', {
                 layout: 'main',
                 results:results
@@ -218,6 +267,10 @@ app.get('/petition/signers', function(req, res) {
     }
 });
 
+// app.get('/petition/signers/:city', function(req,res) {
+//
+//
+// }
 
 app.get('/petition/logout', function(req,res) {
     req.session = null;
