@@ -37,10 +37,10 @@ app.get('/petition', function(req,res) {
 });
 
 app.get('/petition/register', function(req, res) {
-    // if(req.session.user) {
-    //     res.redirect('/petition/form');
-    // }
-    res.render('register', {
+     if(req.session.user) {
+         res.redirect('/petition/form');
+     }
+    else res.render('register', {
         layout:'main'
     });
 });
@@ -52,8 +52,14 @@ app.post('/registering', function(req,res) {
         var email = req.body.email;
         var password = req.body.password;
 
-        if(first&&last&&email&&password) {
 
+        // db.checkEmail(email).then(function(result){
+        //     console.log('hey');
+        //     console.log(result);
+        // });
+        //
+
+        if(first&&last&&email&&password) {
             hashPassword(password).then(function(hash) {
                 var hashedPassword = hash;
                 db.insertUserData(first,last,email,hashedPassword).then
@@ -193,8 +199,8 @@ app.get('/petition/form', function(req, res) {
 
 
 app.post('/signing', function(req,res) {
-    var first = req.body.firstname;
-    var last = req.body.lastname;
+    var first = req.session.user.first;
+    var last = req.session.user.last;
     var sign = req.body.signature;
     var userId = req.session.user.id;
 
@@ -230,23 +236,6 @@ app.get('/petition/thanks', function(req, res) {
 
 
 
-
-
-    // db.countSigners().then(function(count) {
-    //     console.log('getting info');
-    //     db.getTheInfo().then(function(result) {
-    //         var results=result.rows;
-    //         console.log(results);
-    //         res.render('thanks', {
-    //             layout: 'main',
-    //             count:count
-    //         });
-    // }).catch(function(err) {
-    //     console.log(err);
-    // });
-
-
-
 app.get('/petition/signers', function(req, res) {
     if(!(req.session.user)) {
         res.redirect('/petition/register');
@@ -267,10 +256,31 @@ app.get('/petition/signers', function(req, res) {
     }
 });
 
-// app.get('/petition/signers/:city', function(req,res) {
-//
-//
-// }
+app.get('/petition/signers/:city', function(req,res) {
+    console.log(req.params.city);
+    var city = req.params.city;
+    db.getTheInfo().then(function(result) {
+        var results = result.rows;
+        var cityResults = [];
+        console.log(results);
+        for (var i=0;i<results.length;i++) {
+            if(results[i].city===city) {
+                cityResults.push(results[i]);
+            }
+        }
+        return cityResults;
+    }).then(function(cityResults) {
+        console.log(cityResults);
+        res.render('sameCity', {
+            layout: 'main',
+            cityResults:cityResults
+        });
+    }).catch(function() {
+        res.render('error' , {
+            layout: 'main'
+        });
+    });
+})
 
 app.get('/petition/logout', function(req,res) {
     req.session = null;

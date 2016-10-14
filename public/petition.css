@@ -7,6 +7,7 @@
 #signature-text {
     position: relative;
     bottom: 20px;
+    font-size: 26px;
 }
 
 body {
@@ -32,7 +33,7 @@ body {
     position: relative;
     text-align: center;
     margin-top: 20%;
-    bottom:40px;
+    bottom:20px;
 
 }
 

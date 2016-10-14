@@ -47,21 +47,24 @@ exports.insertMoreInfo = function(age,city,homepage,user_id) {
 };
 
 exports.getTheInfo = function() {
-
     return new Promise(function(resolve, reject) {
-        client.query('SELECT signatures.firstname AS firstname, signatures.lastname As lastname, user_profiles.age AS age, user_profiles.city AS city, user_profiles.homepage AS homepage FROM signatures LEFT JOIN user_profiles ON signatures.user_id = user_profiles.user_id', function(err, result) {
+        client.query('SELECT users.firstname AS firstname, users.lastname As lastname, user_profiles.age AS age, user_profiles.city AS city, user_profiles.homepage AS homepage FROM users LEFT JOIN user_profiles ON users.id = user_profiles.user_id', function(err, result) {
             if(err) {
                 reject(err);
             }
             else {
                 resolve(result);
             }
-        })
+        });
     });
-
-
 };
 
+
+// exports.checkEmail = function(email) {
+//     return getFromDb('SELECT * FROM users WHERE email=' + email).then(function(result) {
+//         return result.rows;
+//     });
+// };
 
 function getFromDb(str, params) {
     return new Promise(function(resolve, reject) {
