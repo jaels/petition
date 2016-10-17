@@ -154,3 +154,21 @@ left:40%;
 #tell-more-text {
     text-align: center;
 }
+
+#edit-profile {
+    position: absolute;
+    bottom: 150px;
+    left:20px;
+}
+
+#edit-profile-text {
+    position: relative;
+    text-align: center;
+}
+
+#delete-signature {
+    position: absolute;
+    bottom: 200px;
+    left:20px;
+
+}

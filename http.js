@@ -8,6 +8,9 @@ var bcrypt = require('bcrypt');
 var client = new pg.Client('postgres://spicedling:036363976@localhost:5432/signatures');
 var db=require('./db.js');
 
+// var router = require('./routes/router');
+
+
 client.connect(function(err) {
     console.log(err);
 });
@@ -26,29 +29,37 @@ app.use(cookieSession({
 
 
 
+// app.use('/', router);
 
 app.use(express.static('./public'));
 
 app.get('/petition', function(req,res) {
+    console.log(req.session.user);
     if(!(req.session.user)) {
         res.redirect('/petition/register');
     }
-    else res.redirect('/petition/form');
+    else {
+        console.log('redirecting to form');
+        res.redirect('/petition/form');
+    }
 });
 
 app.get('/petition/register', function(req, res) {
-     if(req.session.user) {
-         res.redirect('/petition/form');
-     }
-    else res.render('register', {
-        layout:'main'
-    });
+    console.log(req.session.user);
+    if(req.session.user) {
+        res.redirect('/petition/form');
+    }
+    else {
+        res.render('register', {
+            layout:'main'
+        });
+    }
 });
 
 app.post('/registering', function(req,res) {
     if((req.body.email).indexOf('@')>-1) {
-        var first = req.body.firstname;
-        var last = req.body.lastname;
+        var firstname = req.body.firstname;
+        var lastname = req.body.lastname;
         var email = req.body.email;
         var password = req.body.password;
 
@@ -59,19 +70,21 @@ app.post('/registering', function(req,res) {
         // });
         //
 
-        if(first&&last&&email&&password) {
+        if(firstname&&lastname&&email&&password) {
             hashPassword(password).then(function(hash) {
                 var hashedPassword = hash;
-                db.insertUserData(first,last,email,hashedPassword).then
+                db.insertUserData(firstname,lastname,email,hashedPassword).then
                 (function(id){
                     req.session.user = {
                         id:id,
-                        first:first,
-                        last:last,
+                        firstname:firstname,
+                        lastname:lastname,
                         email:email
                     };
                     return req.session.user;
                 }).then(function() {
+                    var tempId=req.session.user.id;
+                    console.log('user_id when registering is ' + tempId)
                     res.redirect('/petition/more-info');
                 });
             });
@@ -103,7 +116,10 @@ app.post('/petition/pre-form', function(req,res) {
     var city = req.body.city;
     var homepage = req.body.homepage;
     var user_id = req.session.user.id;
-    console.log(user_id);
+    req.session.user.age=age;
+    req.session.user.city=city;
+    req.session.user.homepage=homepage;
+    console.log('the user id in more info is' + user_id);
     db.insertMoreInfo(age,city,homepage,user_id);
     res.redirect('/petition/form');
 });
@@ -112,7 +128,6 @@ app.post('/check-user', function(req,res) {
 
     var requestedPassword = req.body.password;
     var requestedEmail = req.body.email;
-    console.log(requestedEmail);
 
     client.query('SELECT * FROM users WHERE email=$1', [requestedEmail], function(err, result) {
         if (err) {
@@ -127,14 +142,14 @@ app.post('/check-user', function(req,res) {
 
                 req.session.user = {
                     id:result.rows[0].id,
-                    first:result.rows[0].firstname,
-                    last:result.rows[0].lastname,
+                    firstname:result.rows[0].firstname,
+                    lastname:result.rows[0].lastname,
                     email:result.rows[0].email
                 };
                 checkPassword(requestedPassword,listedPassword).then(function(doesMatch) {
                     if(doesMatch===true) {
 
-                        client.query('SELECT * FROM signatures WHERE user_id=$1', [result.rows[0].id], function(err,result) {
+                        client.query('SELECT * FROM signatures WHERE user_id=$1', [req.session.user.id], function(err,result) {
                             if (err) {
                                 console.log('Could not find signature');
                             }
@@ -169,15 +184,18 @@ app.get('/petition/already-signed', function(req,res) {
     }
     else {
         var temp=req.session.user.signatureId;
+        console.log('temp is ' + temp);
         db.showSignatures(temp).then(function(signature) {
-            db.countSigners().then(function(count) {
+            return db.countSigners().then(function(count) {
                 res.render('already_signed', {
                     layout: 'main',
                     signature:signature,
                     count:count
                 });
             });
-        });
+        }).catch(function(err) {
+            console.log(err);
+        })
     }
 
 });
@@ -188,28 +206,34 @@ app.get('/petition/form', function(req, res) {
         res.redirect('/petition');
     }
     else if(req.session.user.signatureId) {
+        console.log('redirecting to already signed');
         res.redirect('/petition/already-signed');
     }
-    else res.render('form', {
-        layout: 'main'
-    });
+    else {
+        res.render('form', {
+            layout: 'main'
+        });
+
+    }
+
 
 });
 
 
 
 app.post('/signing', function(req,res) {
-    var first = req.session.user.first;
-    var last = req.session.user.last;
+    var firstname = req.session.user.firstname;
+    var lastname = req.session.user.lastname;
     var sign = req.body.signature;
     var userId = req.session.user.id;
 
-    if(first && last && sign) {
-        db.insertData(first,last,sign,userId).then(function(id) {
+    if(sign) {
+        db.insertData(sign,userId).then(function(id) {
             req.session.user.signatureId = id;
             res.redirect('/petition/thanks');
 
-        }).catch(function() {
+        }).catch(function(err) {
+            console.log(err);
             res.render('error' , {
                 layout: 'main'
             });
@@ -227,10 +251,10 @@ app.get('/petition/thanks', function(req, res) {
                 layout: 'main',
                 count:count
             });
-    }).catch(function(err) {
-        console.log(err);
-    })
-}
+        }).catch(function(err) {
+            console.log(err);
+        })
+    }
 });
 
 
@@ -243,6 +267,7 @@ app.get('/petition/signers', function(req, res) {
     else {
         db.getTheInfo().then(function(result) {
             var results=result.rows;
+            console.log('these are the new ');
             console.log(results);
             res.render('signers', {
                 layout: 'main',
@@ -257,7 +282,6 @@ app.get('/petition/signers', function(req, res) {
 });
 
 app.get('/petition/signers/:city', function(req,res) {
-    console.log(req.params.city);
     var city = req.params.city;
     db.getTheInfo().then(function(result) {
         var results = result.rows;
@@ -270,7 +294,6 @@ app.get('/petition/signers/:city', function(req,res) {
         }
         return cityResults;
     }).then(function(cityResults) {
-        console.log(cityResults);
         res.render('sameCity', {
             layout: 'main',
             cityResults:cityResults
@@ -290,6 +313,61 @@ app.get('/petition/logout', function(req,res) {
 
 });
 
+app.get('/petition/edit', function(req, res) {
+    var arr=[req.session.user];
+    console.log(arr);
+    res.render('update', {
+        layout: 'main',
+        arr:arr
+    });
+});
+
+app.post('/petition/updating', function(req, res) {
+    console.log('updating');
+
+    var firstname=req.body.firstname;
+    var lastname=req.body.lastname;
+    var email=req.body.email;
+    var password=req.body.password;
+    var age=req.body.age;
+    var city=req.body.city;
+    var homepage=req.body.homepage;
+    var user_id=req.session.user.id;
+    req.session.user.firstname=req.body.firstname;
+    req.session.user.lastname=req.body.lastname;
+    req.session.user.email=req.body.email;
+    req.session.user.age=req.body.age;
+    req.session.user.city=req.body.city;
+    req.session.user.homepage=req.body.homepage;
+
+
+    if(password.length>0) {
+        hashPassword(password).then(function(hash){
+            var hash=hash;
+            db.updatePassword(hash, user_id);
+        });
+    }
+
+    db.updateData(firstname,lastname,email,user_id)
+    .then(function() {
+        db.updateMoreData(age,city,homepage,user_id);
+    }).then(function() {
+        res.redirect('/petition/form');
+
+    });
+
+});
+
+app.post('/petition/delete', function(req,res) {
+    var signatureId=req.session.user.signatureId;
+    console.log('sign id is ' + signatureId);
+    db.deleteSignature(signatureId).then(function(result) {
+        console.log('baaaaa');
+        console.log(result);
+        req.session.user.signatureId=null;
+        res.redirect('/petition/form');
+    });
+});
 
 function hashPassword(password) {
     return new Promise(function(resolve, reject) {
@@ -326,4 +404,6 @@ function checkPassword(requestedPassword, listedPassword) {
 
 
 
-app.listen(8080);
+app.listen(8080, function() {
+    console.log('listening');
+});

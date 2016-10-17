@@ -1,0 +1,36 @@
+
+<h2 id="edit-profile-text">Edit your profile</h2>
+{{#arr}}
+<form id="login-form" method="POST" action="/petition/updating">
+    First Name:
+    <br>
+    <input class="fields" id='firstname' type="text" name="firstname" value={{firstname}}>
+    <br>
+    Last Name:
+    <br>
+    <input class="fields" id='lastname' type="text" name="lastname" value={{lastname}}>
+    <br>
+    Email:
+    <br>
+    <input class="fields" id='email' type="text" name="email" value={{email}}>
+    <br>
+    Password:
+    <br>
+    <input class="fields" id='password' type="text" name="password" >
+    <br>
+    Age:
+    <br>
+    <input class="fields" id='age' type="text" name="age" value={{age}}>
+    <br>
+    City:
+    <br>
+    <input class="fields" id='city' type="text" name="city" value={{city}}>
+    <br>
+    Homepage:
+    <br>
+    <input class="fields" id='homepage' type="text" name="homepage" value={{homepage}}>
+    <br>
+    <input id="sign-in-botton" type="submit" value="UPDATE">
+    {{/arr}}
+</form>
+{{>logout}}
