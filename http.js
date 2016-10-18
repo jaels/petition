@@ -11,7 +11,7 @@ var db=require('./db.js');
 
 // var router = require('./routes/router');
 
-var csrfProtection = csrf({ cookie: true })
+var csrfProtection = csrf({ cookie: true });
 
 var bodyParser = require('body-parser');
 
@@ -34,7 +34,7 @@ app.use(cookieSession({
     maxAge: 1000 * 60 * 60 * 24 * 14
 }));
 
-var parseForm = bodyParser.urlencoded({ extended: false })
+var parseForm = bodyParser.urlencoded({ extended: false });
 
 
 // app.use('/', router);
@@ -65,38 +65,36 @@ app.get('/petition/register', csrfProtection, function(req, res) {
 });
 
 app.post('/registering', parseForm, csrfProtection, function(req,res) {
-    if((req.body.email).indexOf('@')>-1) {
-        var firstname = req.body.firstname;
-        var lastname = req.body.lastname;
-        var email = req.body.email;
-        var password = req.body.password;
+    var firstname = req.body.firstname;
+    var lastname = req.body.lastname;
+    var email = req.body.email;
+    var password = req.body.password;
 
+    if((req.body.email).indexOf('@')>-1 && firstname && lastname && email && password ) {
 
-        //  db.checkEmail(email).then(function(result){
-        //      console.log('hey');
-        //      console.log(result);
-        //  });
-
-
-        if(firstname&&lastname&&email&&password) {
-            hashPassword(password).then(function(hash) {
-                var hashedPassword = hash;
-                db.insertUserData(firstname,lastname,email,hashedPassword).then
-                (function(id){
-                    req.session.user = {
-                        id:id,
-                        firstname:firstname,
-                        lastname:lastname,
-                        email:email
-                    };
-                    return req.session.user;
-                }).then(function() {
-                    var tempId=req.session.user.id;
-                    console.log('user_id when registering is ' + tempId);
-                    res.redirect('/petition/more-info');
+        db.checkEmail(email).then(function(result) {
+            if(result.rows.length===0) {
+                hashPassword(password).then(function(hash) {
+                    var hashedPassword = hash;
+                    db.insertUserData(firstname,lastname,email,hashedPassword).then
+                    (function(id){
+                        req.session.user = {
+                            id:id,
+                            firstname:firstname,
+                            lastname:lastname,
+                            email:email
+                        };
+                        return req.session.user;
+                    }).then(function() {
+                        var tempId=req.session.user.id;
+                        console.log('user_id when registering is ' + tempId);
+                        res.redirect('/petition/more-info');
+                    });
                 });
-            });
-        }
+
+            }
+            else res.send('Email already exists. Please sign in');
+        });
     }
     else res.send('Your email is not correct');
 
@@ -107,9 +105,7 @@ app.get('/petition/login', csrfProtection, function(req,res) {
         layout:'main',
         csrfToken: req.csrfToken()
     });
-
 });
-
 
 app.get('/petition/more-info', csrfProtection, function(req,res) {
     res.render('more-info', {
@@ -203,7 +199,6 @@ app.get('/petition/already-signed', function(req,res) {
             console.log(err);
         });
     }
-
 });
 
 
@@ -225,8 +220,6 @@ app.get('/petition/form', csrfProtection, function(req, res) {
 
 
 });
-
-
 
 app.post('/signing', parseForm, csrfProtection, function(req,res) {
     var firstname = req.session.user.firstname;
@@ -321,7 +314,6 @@ app.get('/petition/logout', function(req,res) {
     res.render('loged-out' , {
         layout: 'main'
     });
-
 });
 
 app.get('/petition/edit', csrfProtection, function(req, res) {

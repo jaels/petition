@@ -25,7 +25,7 @@ pool.on('error', function(err) {
 });
 
 exports.checkEmail = function(email) {
-    return getFromDb('SELECT * FROM users WHERE email=' + email).then(function(result) {
+    return getFromDb('SELECT * FROM users WHERE email=$1',[email]).then(function(result) {
         return result;
     });
 };
@@ -51,7 +51,7 @@ exports.showSigners = function () {
 };
 
 exports.showSignatures = function (temp) {
-    return getFromDb('SELECT * FROM signatures WHERE user_id=' + temp).then(function(result) {
+    return getFromDb('SELECT * FROM signatures WHERE user_id=$1', [temp]).then(function(result) {
         return result.rows[0].signature;
     });
 };
@@ -92,7 +92,7 @@ exports.updateData = function(firstname,lastname,email,user_id) {
 
 
 exports.updateMoreData = function(age, city, homepage, user_id) {
-    return getFromDb('SELECT * FROM user_profiles WHERE user_id=' + user_id).then(function(result) {
+    return getFromDb('SELECT * FROM user_profiles WHERE user_id=$1', [user_id]).then(function(result) {
         if(result.rows.length>0) {
             getFromDb('UPDATE user_profiles SET (age,city,homepage)=($1,$2,$3) WHERE user_id=$4 RETURNING id', [age,city,homepage,user_id]);
         }
@@ -105,7 +105,7 @@ exports.updateMoreData = function(age, city, homepage, user_id) {
 
 
 exports.deleteSignature = function(signatureId) {
-    return getFromDb('DELETE FROM signatures WHERE id=' + signatureId).then(function(result) {
+    return getFromDb('DELETE FROM signatures WHERE id=$1', [signatureId]).then(function(result) {
         return result;
     });
 };
