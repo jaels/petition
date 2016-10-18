@@ -50,6 +50,7 @@ app.get('/petition/register', function(req, res) {
         res.redirect('/petition/form');
     }
     else {
+        console.log('not there');
         res.render('register', {
             layout:'main'
         });
@@ -84,7 +85,7 @@ app.post('/registering', function(req,res) {
                     return req.session.user;
                 }).then(function() {
                     var tempId=req.session.user.id;
-                    console.log('user_id when registering is ' + tempId)
+                    console.log('user_id when registering is ' + tempId);
                     res.redirect('/petition/more-info');
                 });
             });
@@ -113,7 +114,7 @@ app.get('/petition/more-info', function(req,res) {
 app.post('/petition/pre-form', function(req,res) {
 
     var age = req.body.age;
-    var city = req.body.city;
+    var city = (req.body.city).toUpperCase();
     var homepage = req.body.homepage;
     var user_id = req.session.user.id;
     req.session.user.age=age;
@@ -129,53 +130,52 @@ app.post('/check-user', function(req,res) {
     var requestedPassword = req.body.password;
     var requestedEmail = req.body.email;
 
-    client.query('SELECT * FROM users WHERE email=$1', [requestedEmail], function(err, result) {
-        if (err) {
+    db.checkIfEmailExists(requestedEmail).then(function(result) {
+        if (result.rows.length===0) {
             res.send('No such user, please register');
         }
         else {
-            if (result.rows.length===0) {
-                res.send('No such user, please register');
-            }
-            else {
-                var listedPassword = result.rows[0].password;
+            var listedPassword = result.rows[0].password;
+            console.log(listedPassword);
+            var id=result.rows[0].id;
+            var firstname=result.rows[0].firstname;
+            var lastname=result.rows[0].lastname;
+            var email=result.rows[0].emai;
+            checkPassword(requestedPassword,listedPassword).then(function(doesMatch) {
+                console.log(doesMatch);
+                if(doesMatch===true) {
+                    req.session.user = {
+                        id:id,
+                        firstname:firstname,
+                        lastname:lastname,
+                        email:email
+                    };
 
-                req.session.user = {
-                    id:result.rows[0].id,
-                    firstname:result.rows[0].firstname,
-                    lastname:result.rows[0].lastname,
-                    email:result.rows[0].email
-                };
-                checkPassword(requestedPassword,listedPassword).then(function(doesMatch) {
-                    if(doesMatch===true) {
+                    var user_id = req.session.user.id;
+                    db.checkIfsignature(user_id).then(function(result) {
+                        if(result.rows.length===0) {
+                            res.redirect('/petition/form');
+                        }
+                        else {
+                            req.session.user.signatureId = result.rows[0].id;
+                            res.redirect('/petition/already-signed');
+                        }
+                    });
+                }
 
-                        client.query('SELECT * FROM signatures WHERE user_id=$1', [req.session.user.id], function(err,result) {
-                            if (err) {
-                                console.log('Could not find signature');
-                            }
-
-                            else {
-                                if(result.rows.length===0) {
-                                    res.redirect('/petition/form');
-                                }
-
-                                else {
-                                    req.session.user.signatureId = result.rows[0].id;
-                                    // var temp=result.rows[0].id;
-                                    res.redirect('/petition/already-signed');
-                                }
-                            }
-                        });
-                    }
-
-                    else res.send('Wrong user or password');
-
-                });
-            }
+                else {
+                    res.send('Wrong password, try again');
+                }
+            });
         }
+    }).catch(function(err) {
+        console.log(err);
+        res.render('error' , {
+            layout: 'main'
+        });
+
     });
 });
-
 
 
 app.get('/petition/already-signed', function(req,res) {
@@ -183,7 +183,7 @@ app.get('/petition/already-signed', function(req,res) {
         res.redirect('/petition');
     }
     else {
-        var temp=req.session.user.signatureId;
+        var temp=req.session.user.id;
         console.log('temp is ' + temp);
         db.showSignatures(temp).then(function(signature) {
             return db.countSigners().then(function(count) {
@@ -253,7 +253,7 @@ app.get('/petition/thanks', function(req, res) {
             });
         }).catch(function(err) {
             console.log(err);
-        })
+        });
     }
 });
 
@@ -303,10 +303,11 @@ app.get('/petition/signers/:city', function(req,res) {
             layout: 'main'
         });
     });
-})
+});
 
 app.get('/petition/logout', function(req,res) {
     req.session = null;
+    console.log('after deleting ' + req.session);
     res.render('loged-out' , {
         layout: 'main'
     });
@@ -330,7 +331,7 @@ app.post('/petition/updating', function(req, res) {
     var email=req.body.email;
     var password=req.body.password;
     var age=req.body.age;
-    var city=req.body.city;
+    var city=req.body.city.toUpperCase();
     var homepage=req.body.homepage;
     var user_id=req.session.user.id;
     req.session.user.firstname=req.body.firstname;
@@ -387,7 +388,6 @@ function hashPassword(password) {
     });
 }
 
-
 function checkPassword(requestedPassword, listedPassword) {
     return new Promise(function(resolve, reject) {
         bcrypt.compare(requestedPassword, listedPassword, function(err, doesMatch) {
@@ -395,13 +395,12 @@ function checkPassword(requestedPassword, listedPassword) {
                 reject(err);
             }
             else {
+                console.log(doesMatch);
                 resolve(doesMatch);
             }
         });
     });
 }
-
-
 
 
 app.listen(8080, function() {
