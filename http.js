@@ -45,12 +45,10 @@ app.get('/petition', function(req,res) {
 });
 
 app.get('/petition/register', function(req, res) {
-    console.log(req.session.user);
     if(req.session.user) {
         res.redirect('/petition/form');
     }
     else {
-        console.log('not there');
         res.render('register', {
             layout:'main'
         });
@@ -184,7 +182,6 @@ app.get('/petition/already-signed', function(req,res) {
     }
     else {
         var temp=req.session.user.id;
-        console.log('temp is ' + temp);
         db.showSignatures(temp).then(function(signature) {
             return db.countSigners().then(function(count) {
                 res.render('already_signed', {
@@ -267,8 +264,6 @@ app.get('/petition/signers', function(req, res) {
     else {
         db.getTheInfo().then(function(result) {
             var results=result.rows;
-            console.log('these are the new ');
-            console.log(results);
             res.render('signers', {
                 layout: 'main',
                 results:results
@@ -286,7 +281,6 @@ app.get('/petition/signers/:city', function(req,res) {
     db.getTheInfo().then(function(result) {
         var results = result.rows;
         var cityResults = [];
-        console.log(results);
         for (var i=0;i<results.length;i++) {
             if(results[i].city===city) {
                 cityResults.push(results[i]);
@@ -316,7 +310,6 @@ app.get('/petition/logout', function(req,res) {
 
 app.get('/petition/edit', function(req, res) {
     var arr=[req.session.user];
-    console.log(arr);
     res.render('update', {
         layout: 'main',
         arr:arr
@@ -361,10 +354,7 @@ app.post('/petition/updating', function(req, res) {
 
 app.post('/petition/delete', function(req,res) {
     var signatureId=req.session.user.signatureId;
-    console.log('sign id is ' + signatureId);
     db.deleteSignature(signatureId).then(function(result) {
-        console.log('baaaaa');
-        console.log(result);
         req.session.user.signatureId=null;
         res.redirect('/petition/form');
     });

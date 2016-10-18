@@ -1,12 +1,29 @@
 
 
-
 var pg = require('pg');
 
-var client = new pg.Client('postgres://spicedling:036363976@localhost:5432/signatures');
-client.connect(function(err) {
+var dbUrl = 'postgres://spicedling:036363976@localhost:5432/signatures';
+
+dbUrl = require('url').parse(dbUrl);
+
+var dbUser = dbUrl.auth.split(':');
+
+var dbConfig = {
+    user: dbUser[0],
+    database: dbUrl.pathname.slice(1),
+    password: dbUser[1],
+    host: dbUrl.hostname,
+    port: 5432,
+    max: 10,
+    idleTimeoutMillis: 30000
+};
+
+var pool = new pg.Pool(dbConfig);
+
+pool.on('error', function(err) {
     console.log(err);
 });
+
 
 exports.insertData = function(sign,userId) {
     return getFromDb('INSERT into signatures(signature,user_id) VALUES($1, $2) RETURNING id',[sign,userId]).then(function(result) {
@@ -83,15 +100,8 @@ exports.updateMoreData = function(age, city, homepage, user_id) {
 
 
 exports.deleteSignature = function(signatureId) {
-    return new Promise(function(resolve, reject) {
-        client.query('DELETE FROM signatures WHERE id=' + signatureId, function(err,result) {
-            if(err) {
-                reject(err);
-            }
-            else {
-                resolve(result);
-            }
-        });
+    return getFromDb('DELETE FROM signatures WHERE id=' + signatureId).then(function(result) {
+        return result;
     });
 };
 
@@ -110,16 +120,23 @@ exports.checkIfsignature = function(user_id) {
 };
 
 
-
 function getFromDb(str, params) {
     return new Promise(function(resolve, reject) {
-        client.query(str, params || [], function(err, result) {
-            if(err) {
+        pool.connect(function(err, client, done) {
+            if (err) {
                 reject(err);
+                return;
             }
-            else {
-                resolve(result);
-            }
+            client.query(str, params || [], function(err, result) {
+                if(err) {
+                    reject(err);
+                }
+                else {
+                    resolve(result);
+                }
+                done();
+            });
+
         });
     });
 }
