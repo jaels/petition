@@ -5,17 +5,24 @@ var hb = require('express-handlebars');
 var pg = require('pg');
 var cookieSession = require('cookie-session');
 var bcrypt = require('bcrypt');
+var csrf = require('csurf');
 var client = new pg.Client('postgres://spicedling:036363976@localhost:5432/signatures');
 var db=require('./db.js');
 
 // var router = require('./routes/router');
 
+var csrfProtection = csrf({ cookie: true })
+
+var bodyParser = require('body-parser');
 
 client.connect(function(err) {
     console.log(err);
 });
 
-app.use(require('body-parser').urlencoded({
+// app.use(csrf({ cookie: true }));
+
+
+app.use(bodyParser.urlencoded({
     extended: false
 }));
 app.use(require('cookie-parser')());
@@ -27,6 +34,7 @@ app.use(cookieSession({
     maxAge: 1000 * 60 * 60 * 24 * 14
 }));
 
+var parseForm = bodyParser.urlencoded({ extended: false })
 
 
 // app.use('/', router);
@@ -44,18 +52,19 @@ app.get('/petition', function(req,res) {
     }
 });
 
-app.get('/petition/register', function(req, res) {
+app.get('/petition/register', csrfProtection, function(req, res) {
     if(req.session.user) {
         res.redirect('/petition/form');
     }
     else {
         res.render('register', {
-            layout:'main'
+            layout:'main',
+            csrfToken: req.csrfToken()
         });
     }
 });
 
-app.post('/registering', function(req,res) {
+app.post('/registering', parseForm, csrfProtection, function(req,res) {
     if((req.body.email).indexOf('@')>-1) {
         var firstname = req.body.firstname;
         var lastname = req.body.lastname;
@@ -63,11 +72,11 @@ app.post('/registering', function(req,res) {
         var password = req.body.password;
 
 
-        // db.checkEmail(email).then(function(result){
-        //     console.log('hey');
-        //     console.log(result);
-        // });
-        //
+        //  db.checkEmail(email).then(function(result){
+        //      console.log('hey');
+        //      console.log(result);
+        //  });
+
 
         if(firstname&&lastname&&email&&password) {
             hashPassword(password).then(function(hash) {
@@ -93,23 +102,23 @@ app.post('/registering', function(req,res) {
 
 });
 
-app.get('/petition/login', function(req,res) {
+app.get('/petition/login', csrfProtection, function(req,res) {
     res.render('login', {
-        layout:'main'
+        layout:'main',
+        csrfToken: req.csrfToken()
     });
 
 });
 
 
-app.get('/petition/more-info', function(req,res) {
+app.get('/petition/more-info', csrfProtection, function(req,res) {
     res.render('more-info', {
-        layout:'main'
+        layout:'main',
+        csrfToken: req.csrfToken()
     });
-
-
 });
 
-app.post('/petition/pre-form', function(req,res) {
+app.post('/petition/pre-form',parseForm, csrfProtection, function(req,res) {
 
     var age = req.body.age;
     var city = (req.body.city).toUpperCase();
@@ -123,7 +132,7 @@ app.post('/petition/pre-form', function(req,res) {
     res.redirect('/petition/form');
 });
 
-app.post('/check-user', function(req,res) {
+app.post('/check-user', parseForm, csrfProtection, function(req,res) {
 
     var requestedPassword = req.body.password;
     var requestedEmail = req.body.email;
@@ -192,13 +201,13 @@ app.get('/petition/already-signed', function(req,res) {
             });
         }).catch(function(err) {
             console.log(err);
-        })
+        });
     }
 
 });
 
 
-app.get('/petition/form', function(req, res) {
+app.get('/petition/form', csrfProtection, function(req, res) {
     if(!(req.session.user)) {
         res.redirect('/petition');
     }
@@ -208,7 +217,8 @@ app.get('/petition/form', function(req, res) {
     }
     else {
         res.render('form', {
-            layout: 'main'
+            layout: 'main',
+            csrfToken: req.csrfToken()
         });
 
     }
@@ -218,7 +228,7 @@ app.get('/petition/form', function(req, res) {
 
 
 
-app.post('/signing', function(req,res) {
+app.post('/signing', parseForm, csrfProtection, function(req,res) {
     var firstname = req.session.user.firstname;
     var lastname = req.session.user.lastname;
     var sign = req.body.signature;
@@ -238,7 +248,7 @@ app.post('/signing', function(req,res) {
     }
 });
 
-app.get('/petition/thanks', function(req, res) {
+app.get('/petition/thanks', csrfProtection, function(req, res) {
     if(!(req.session.user)) {
         res.redirect('/petition/register');
     }
@@ -246,7 +256,9 @@ app.get('/petition/thanks', function(req, res) {
         db.countSigners().then(function(count) {
             res.render('thanks', {
                 layout: 'main',
-                count:count
+                count:count,
+                csrfToken: req.csrfToken()
+
             });
         }).catch(function(err) {
             console.log(err);
@@ -257,7 +269,7 @@ app.get('/petition/thanks', function(req, res) {
 
 
 
-app.get('/petition/signers', function(req, res) {
+app.get('/petition/signers', csrfProtection,function(req, res) {
     if(!(req.session.user)) {
         res.redirect('/petition/register');
     }
@@ -266,7 +278,9 @@ app.get('/petition/signers', function(req, res) {
             var results=result.rows;
             res.render('signers', {
                 layout: 'main',
-                results:results
+                results:results,
+                csrfToken: req.csrfToken()
+
             });
         }).catch(function() {
             res.render('error' , {
@@ -276,7 +290,7 @@ app.get('/petition/signers', function(req, res) {
     }
 });
 
-app.get('/petition/signers/:city', function(req,res) {
+app.get('/petition/signers/:city', csrfProtection, function(req,res) {
     var city = req.params.city;
     db.getTheInfo().then(function(result) {
         var results = result.rows;
@@ -290,7 +304,9 @@ app.get('/petition/signers/:city', function(req,res) {
     }).then(function(cityResults) {
         res.render('sameCity', {
             layout: 'main',
-            cityResults:cityResults
+            cityResults:cityResults,
+            csrfToken: req.csrfToken()
+
         });
     }).catch(function() {
         res.render('error' , {
@@ -308,15 +324,16 @@ app.get('/petition/logout', function(req,res) {
 
 });
 
-app.get('/petition/edit', function(req, res) {
+app.get('/petition/edit', csrfProtection, function(req, res) {
     var arr=[req.session.user];
     res.render('update', {
         layout: 'main',
-        arr:arr
+        arr:arr,
+        csrfToken: req.csrfToken()
     });
 });
 
-app.post('/petition/updating', function(req, res) {
+app.post('/petition/updating', parseForm, csrfProtection, function(req, res) {
     console.log('updating');
 
     var firstname=req.body.firstname;
@@ -352,7 +369,7 @@ app.post('/petition/updating', function(req, res) {
 
 });
 
-app.post('/petition/delete', function(req,res) {
+app.post('/petition/delete', parseForm, csrfProtection, function(req,res) {
     var signatureId=req.session.user.signatureId;
     db.deleteSignature(signatureId).then(function(result) {
         req.session.user.signatureId=null;

@@ -24,6 +24,11 @@ pool.on('error', function(err) {
     console.log(err);
 });
 
+exports.checkEmail = function(email) {
+    return getFromDb('SELECT * FROM users WHERE email=' + email).then(function(result) {
+        return result;
+    });
+};
 
 exports.insertData = function(sign,userId) {
     return getFromDb('INSERT into signatures(signature,user_id) VALUES($1, $2) RETURNING id',[sign,userId]).then(function(result) {
