@@ -2,7 +2,7 @@
 #sign-area {
     position: relative;
     text-align: center;
-    margin-top:0;
+    bottom: 25px;
 }
 
 #canv {
