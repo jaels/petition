@@ -12,14 +12,15 @@ var csrf = require('csurf');
 var csrfProtection = csrf({cookie: true});
 var parseForm = bodyParser.urlencoded({extended: false});
 
+router.get('/', function(req,res) {
+    res.redirect('/petition');
+});
 
 router.get('/petition', function(req,res) {
-    console.log(req.session.user);
     if(!(req.session.user)) {
         res.redirect('/petition/register');
     }
     else {
-        console.log('redirecting to form');
         res.redirect('/petition/form');
     }
 });
@@ -37,8 +38,6 @@ router.get('/petition/register', function(req, res) {
 });
 
 router.post('/registering', function(req,res) {
-    console.log('registering');
-    console.log(req.csrfToken());
     var firstname = req.body.firstname;
     var lastname = req.body.lastname;
     var email = req.body.email;
@@ -46,11 +45,8 @@ router.post('/registering', function(req,res) {
 
     if((req.body.email).indexOf('@')>-1 && firstname && lastname && email && password ) {
         db.checkEmail(email).then(function(result) {
-            console.log(result);
             if(result.rows.length===0) {
-
                 hashPassword(password).then(function(hash) {
-
                     var hashedPassword = hash;
                     db.insertUserData(firstname,lastname,email,hashedPassword).then
                     (function(id){
@@ -60,7 +56,7 @@ router.post('/registering', function(req,res) {
                             lastname:lastname,
                             email:email
                         };
-                        console.log(req.session.user);
+
                         return req.session.user;
                     }).then(function() {
                         var tempId=req.session.user.id;
@@ -68,11 +64,10 @@ router.post('/registering', function(req,res) {
                         res.redirect('/petition/more-info');
                     }).catch(function(err) {
                         console.log(err);
-                    })
+                    });
                 }).catch(function(err) {
                     console.log(err);
-                })
-
+                });
             }
             else res.send('Email already exists. Please sign in');
         });
@@ -120,13 +115,11 @@ router.post('/check-user', function(req,res) {
         }
         else {
             var listedPassword = result.rows[0].password;
-            console.log(listedPassword);
             var id=result.rows[0].id;
             var firstname=result.rows[0].firstname;
             var lastname=result.rows[0].lastname;
             var email=result.rows[0].emai;
             checkPassword(requestedPassword,listedPassword).then(function(doesMatch) {
-                console.log(doesMatch);
                 if(doesMatch===true) {
                     req.session.user = {
                         id:id,
@@ -188,7 +181,6 @@ router.get('/petition/form', function(req, res) {
         res.redirect('/petition');
     }
     else if(req.session.user.signatureId) {
-        console.log('redirecting to already signed');
         res.redirect('/petition/already-signed');
     }
     else {
@@ -291,7 +283,6 @@ router.get('/petition/signers/:city', function(req,res) {
 
 router.get('/petition/logout', function(req,res) {
     req.session = null;
-    console.log('after deleting ' + req.session);
     res.render('loged-out' , {
         layout: 'main'
     });
@@ -307,7 +298,6 @@ router.get('/petition/edit', function(req, res) {
 });
 
 router.post('/petition/updating', function(req, res) {
-    console.log('updating');
 
     var firstname=req.body.firstname;
     var lastname=req.body.lastname;
