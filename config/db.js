@@ -1,7 +1,7 @@
 
 var pg = require('pg');
 
-var dbUrl = 'postgres://spicedling:036363976@localhost:5432/signatures';
+var dbUrl = process.env.DATABASE_URL ||'postgres://spicedling:036363976@localhost:5432/signatures';
 
 dbUrl = require('url').parse(dbUrl);
 
@@ -12,7 +12,7 @@ var dbConfig = {
     database: dbUrl.pathname.slice(1),
     password: dbUser[1],
     host: dbUrl.hostname,
-    port: 5432,
+    port: dbUrl.port,
     max: 10,
     idleTimeoutMillis: 30000
 };
