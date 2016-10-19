@@ -1,5 +1,4 @@
 
-
 var pg = require('pg');
 
 var dbUrl = 'postgres://spicedling:036363976@localhost:5432/signatures';
@@ -58,7 +57,6 @@ exports.showSignatures = function (temp) {
 
 
 exports.insertUserData = function(firstname,lastname,email,hashedPassword) {
-
     return getFromDb('INSERT into users(firstname, lastname, email, password) VALUES($1, $2, $3, $4) RETURNING id',[firstname,lastname,email,hashedPassword]).then(function(result) {
         return result.rows[0].id;
     });
@@ -139,6 +137,7 @@ function getFromDb(str, params) {
                 else {
                     resolve(result);
                 }
+
                 done();
             });
 
