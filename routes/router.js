@@ -161,7 +161,7 @@ router.get('/petition/already-signed', function(req,res) {
     }
     else {
         var temp=req.session.user.id;
-        db.showSignatures(temp).then(function(signature) {
+        db.showSignature(temp).then(function(signature) {
             return db.countSigners().then(function(count) {
                 res.render('already_signed', {
                     layout: 'main',

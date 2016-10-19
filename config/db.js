@@ -42,14 +42,14 @@ exports.countSigners = function () {
     });
 };
 
-exports.showSigners = function () {
-    return getFromDb("SELECT firstname, lastname FROM signatures").then(function(result) {
-        var results=result.rows;
-        return results;
-    });
-};
+// exports.showSigners = function () {
+//     return getFromDb("SELECT firstname, lastname FROM signatures").then(function(result) {
+//         var results=result.rows;
+//         return results;
+//     });
+// };
 
-exports.showSignatures = function (temp) {
+exports.showSignature = function (temp) {
     return getFromDb('SELECT * FROM signatures WHERE user_id=$1', [temp]).then(function(result) {
         return result.rows[0].signature;
     });
@@ -69,11 +69,13 @@ exports.insertMoreInfo = function(age,city,homepage,user_id) {
 };
 
 exports.getTheInfo = function() {
-    return getFromDb('SELECT users.firstname AS firstname, users.lastname As lastname, user_profiles.age AS age, user_profiles.city AS city, user_profiles.homepage AS homepage FROM users LEFT JOIN user_profiles ON users.id = user_profiles.user_id').then(function(result) {
-        return result;
-    });
-};
+    return getFromDb('SELECT users.firstname AS firstname, users.lastname As lastname, user_profiles.age AS age, user_profiles.city AS city, user_profiles.homepage AS homepage FROM signatures LEFT JOIN users ON users.id=signatures.user_id LEFT JOIN user_profiles ON users.id = user_profiles.user_id ').then(function(result) {
 
+        return result;
+    }).catch(function(err){
+        console.log(err);
+    })
+};
 
 
 
