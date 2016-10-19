@@ -1,4 +1,18 @@
 
+var redis = require('redis');
+var client = redis.createClient({
+    host: 'localhost',
+    port: 6379
+});
+
+client.on('error', function(err) {
+    console.log(err);
+});
+
+
+
+
+
 var pg = require('pg');
 
 var dbUrl = process.env.DATABASE_URL ||'postgres://spicedling:036363976@localhost:5432/signatures';
@@ -31,6 +45,7 @@ exports.checkEmail = function(email) {
 
 exports.insertData = function(sign,userId) {
     return getFromDb('INSERT into signatures(signature,user_id) VALUES($1, $2) RETURNING id',[sign,userId]).then(function(result) {
+        client.del('signers');
         return result.rows[0].id;
     });
 };
@@ -42,12 +57,6 @@ exports.countSigners = function () {
     });
 };
 
-// exports.showSigners = function () {
-//     return getFromDb("SELECT firstname, lastname FROM signatures").then(function(result) {
-//         var results=result.rows;
-//         return results;
-//     });
-// };
 
 exports.showSignature = function (temp) {
     return getFromDb('SELECT * FROM signatures WHERE user_id=$1', [temp]).then(function(result) {
@@ -58,6 +67,7 @@ exports.showSignature = function (temp) {
 
 exports.insertUserData = function(firstname,lastname,email,hashedPassword) {
     return getFromDb('INSERT into users(firstname, lastname, email, password) VALUES($1, $2, $3, $4) RETURNING id',[firstname,lastname,email,hashedPassword]).then(function(result) {
+        client.del('signers');
         return result.rows[0].id;
     });
 };
@@ -69,12 +79,28 @@ exports.insertMoreInfo = function(age,city,homepage,user_id) {
 };
 
 exports.getTheInfo = function() {
-    return getFromDb('SELECT users.firstname AS firstname, users.lastname As lastname, user_profiles.age AS age, user_profiles.city AS city, user_profiles.homepage AS homepage FROM signatures LEFT JOIN users ON users.id=signatures.user_id LEFT JOIN user_profiles ON users.id = user_profiles.user_id ').then(function(result) {
+    return new Promise(function(resolve, reject) {
+        client.get('signers', function(err,data) {
+            if(err) {
+                reject(err);
+            }
+            else if (data) {
+                console.log(data, typeof data);
 
-        return result;
+                resolve(JSON.parse(data));
+            }
+            else return getFromDb('SELECT users.firstname AS firstname, users.lastname As lastname, user_profiles.age AS age, user_profiles.city AS city, user_profiles.homepage AS homepage FROM signatures LEFT JOIN users ON users.id=signatures.user_id LEFT JOIN user_profiles ON users.id = user_profiles.user_id ').then(function(result) {
+                client.setex('signers', 1800, JSON.stringify(result), function(err, data) {
+                    if (err) {
+                        return console.log(err);
+                    }
+                });
+                resolve(result);
+            })
+        });
     }).catch(function(err){
         console.log(err);
-    })
+    });
 };
 
 
@@ -86,6 +112,7 @@ exports.updatePassword = function(hash, user_id) {
 
 exports.updateData = function(firstname,lastname,email,user_id) {
     return getFromDb('UPDATE users SET (firstname, lastname, email)=($1,$2,$3) WHERE id=$4 RETURNING id',[firstname, lastname, email, user_id]).then(function(result) {
+        client.del('signers');
         return result;
     });
 };
@@ -99,6 +126,9 @@ exports.updateMoreData = function(age, city, homepage, user_id) {
         else {
             getFromDb('INSERT into user_profiles (age,city,homepage,user_id) VALUES ($1,$2,$3,$4) RETURNING id', [age,city, homepage, user_id]);
         }
+        client.del('signers', function(err) {
+            console.log(err);
+        });
     });
 
 };
@@ -106,6 +136,7 @@ exports.updateMoreData = function(age, city, homepage, user_id) {
 
 exports.deleteSignature = function(signatureId) {
     return getFromDb('DELETE FROM signatures WHERE id=$1', [signatureId]).then(function(result) {
+        client.del('signers');
         return result;
     });
 };
@@ -124,6 +155,39 @@ exports.checkIfsignature = function(user_id) {
     });
 };
 
+
+// exports.wrongPassword = function() {
+//     client.get('wrong', function(err,data) {
+//         if(err) {
+//             console.log(err);
+//         }
+//         else if (data) {
+//             var num = JSON.parse(data);
+//             if (num<3) {
+//                 client.setex('wrong', 60, JSON.stringify(num+1), function(err, data) {
+//                     if (err) {
+//                         return console.log(err);
+//                     }
+//                 });
+//             }
+//             else {
+//                 client.setex('wrong', 90*(Math.pow(2, num-3)), JSON.stringify(num+1), function(err, data) {
+//                     if (err) {
+//                         return console.log(err);
+//                     }
+//                 });
+//             }
+//         }
+//         else {
+//             client.setex('wrong', 60, JSON.stringify(1), function(err, data) {
+//                 if (err) {
+//                     return console.log(err);
+//                 }
+//             });
+//         }
+//     })
+// }
+//
 
 function getFromDb(str, params) {
     return new Promise(function(resolve, reject) {

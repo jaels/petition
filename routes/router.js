@@ -6,6 +6,7 @@ var bcrypt = require('bcrypt');
 
 var db=require('../config/db');
 
+var counter=0;
 
 bodyParser = require('body-parser');
 var csrf = require('csurf');
@@ -141,6 +142,7 @@ router.post('/check-user', function(req,res) {
                 }
 
                 else {
+                    // db.wrongPassword();
                     res.send('Wrong password, try again');
                 }
             });
