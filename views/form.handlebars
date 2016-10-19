@@ -2,8 +2,9 @@
 
 <p id='explanation'> There is a reason why german people don't know or don't like shows like Seinfeld. For them, Jerry is not Jerry, Elaine is not Elaine, Kramer is not Kramer, and so on.<br> All of the above are actually german people, with doubtful sense of humour or acting skills. The year is 2016, and it's time for people to make the effort of reading subtitles, and actually see the film/show with it's intended and original acting. And there's a bonus: words that actually match the mouth movement</p>
 
-<iframe id="video" width="420" height="230" src="https://www.youtube.com/embed/mhNc3oaEUUE?start=25&end=28" frameborder="0" allowfullscreen></iframe>
-
+<div id="video-container">
+<iframe id="video"  src="https://www.youtube.com/embed/mhNc3oaEUUE?start=25&end=28" frameborder="0" allowfullscreen></iframe>
+</div>
 <div id='sign-area'>
 <form method="POST" action="/signing">
     <br><br>
@@ -11,13 +12,10 @@
     <input id='signature' type='hidden' type='image' name='signature'>
     <canvas id="canv" width="400" height="80">
     </canvas>
-
     <input id="submit" type="submit" value="Submit">
     <input type="hidden" name="_csrf" value="{{csrfToken}}">
 
 </form>
-
-
 </div>
 
 {{>logout}}

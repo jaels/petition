@@ -1,16 +1,15 @@
 
 #sign-area {
-    text-align: center;
     position: relative;
     text-align: center;
-    margin-top: 15%;
+    margin-top:0;
 }
 
 #canv {
     position: relative;
     border: 2px solid black;
     margin-top: 0;
-    left:6%;
+    left:5%;
 }
 
 
@@ -18,7 +17,7 @@
     position: relative;
     height:150px;
     width:150px;
-    left:6%;
+    left:5%;
 }
 
 #signature-text {
@@ -47,11 +46,13 @@ body {
 
 
 #explanation {
-    top: 10px;
+    position:relative;
+    top: 5%;
     font-size: 22px;
     text-align: center;
-}
+    margin-bottom: 2%;
 
+}
 
 
 #thanks {
@@ -65,7 +66,7 @@ body {
     cursor: pointer;
     text-align: center;
     left: 45%;
-    top:50px;
+    top:35%;
 
 }
 
@@ -75,22 +76,27 @@ body {
 
 #signers {
     position: relative;
-left:40%;
+    text-align: center;
+    list-style-type: none;
+
 }
 
 #existing-signature {
     position: relative;
-    height: 100px;
+    text-align: center;
+    height: 80px;
     width: 400px;
     border: 2px solid black;
-    left: 38%;
-    top:20px;
+    left: 37%;
+    top:25%;
 }
 
+
 #video{
-    position:absolute;
-    bottom:27%;
+    position:relative;
     left:35%;
+    width:400px;
+    height:230px;
 }
 
 #already-signed-text{
