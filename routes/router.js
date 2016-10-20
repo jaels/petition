@@ -106,53 +106,62 @@ router.post('/petition/pre-form', function(req,res) {
 });
 
 router.post('/check-user', function(req,res) {
-
-    var requestedPassword = req.body.password;
-    var requestedEmail = req.body.email;
-
-    db.checkIfEmailExists(requestedEmail).then(function(result) {
-        if (result.rows.length===0) {
-            res.send('No such user, please register');
+    db.checkRedis().then(function(data) {
+        if(JSON.parse(data)>2) {
+            db.wrongPassword();
+            res.send('Too many failed trials, try again later');
+            reject();
         }
-        else {
-            var listedPassword = result.rows[0].password;
-            var id=result.rows[0].id;
-            var firstname=result.rows[0].firstname;
-            var lastname=result.rows[0].lastname;
-            var email=result.rows[0].emai;
-            checkPassword(requestedPassword,listedPassword).then(function(doesMatch) {
-                if(doesMatch===true) {
-                    req.session.user = {
-                        id:id,
-                        firstname:firstname,
-                        lastname:lastname,
-                        email:email
-                    };
+        else
+        return;
+    }).then(function() {
+        console.log('resolved');
+        var requestedPassword = req.body.password;
+        var requestedEmail = req.body.email;
 
-                    var user_id = req.session.user.id;
-                    db.checkIfsignature(user_id).then(function(result) {
-                        if(result.rows.length===0) {
-                            res.redirect('/petition/form');
-                        }
-                        else {
-                            req.session.user.signatureId = result.rows[0].id;
-                            res.redirect('/petition/already-signed');
-                        }
-                    });
-                }
+        db.checkIfEmailExists(requestedEmail).then(function(result) {
+            if (result.rows.length===0) {
+                res.send('No such user, please register');
+            }
+            else {
+                var listedPassword = result.rows[0].password;
+                var id=result.rows[0].id;
+                var firstname=result.rows[0].firstname;
+                var lastname=result.rows[0].lastname;
+                var email=result.rows[0].email;
+                checkPassword(requestedPassword,listedPassword).then(function(doesMatch) {
+                    if(doesMatch===true) {
+                        req.session.user = {
+                            id:id,
+                            firstname:firstname,
+                            lastname:lastname,
+                            email:email
+                        };
 
-                else {
-                    // db.wrongPassword();
-                    res.send('Wrong password, try again');
-                }
+                        var user_id = req.session.user.id;
+                        db.checkIfsignature(user_id).then(function(result) {
+                            if(result.rows.length===0) {
+                                res.redirect('/petition/form');
+                            }
+                            else {
+                                req.session.user.signatureId = result.rows[0].id;
+                                res.redirect('/petition/already-signed');
+                            }
+                        });
+                    }
+
+                    else {
+                        db.wrongPassword();
+                        res.send('Wrong password, try again');
+                    }
+                });
+            }
+        }).catch(function(err) {
+            console.log(err);
+            res.render('error' , {
+                layout: 'main'
             });
-        }
-    }).catch(function(err) {
-        console.log(err);
-        res.render('error' , {
-            layout: 'main'
         });
-
     });
 });
 

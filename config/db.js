@@ -12,7 +12,6 @@ client.on('error', function(err) {
 
 
 
-
 var pg = require('pg');
 
 var dbUrl = process.env.DATABASE_URL ||'postgres://spicedling:036363976@localhost:5432/signatures';
@@ -90,13 +89,13 @@ exports.getTheInfo = function() {
                 resolve(JSON.parse(data));
             }
             else return getFromDb('SELECT users.firstname AS firstname, users.lastname As lastname, user_profiles.age AS age, user_profiles.city AS city, user_profiles.homepage AS homepage FROM signatures LEFT JOIN users ON users.id=signatures.user_id LEFT JOIN user_profiles ON users.id = user_profiles.user_id ').then(function(result) {
-                client.setex('signers', 1800, JSON.stringify(result), function(err, data) {
+                client.setex('signers', 1800, JSON.stringify(result), function(err) {
                     if (err) {
                         return console.log(err);
                     }
                 });
                 resolve(result);
-            })
+            });
         });
     }).catch(function(err){
         console.log(err);
@@ -155,39 +154,72 @@ exports.checkIfsignature = function(user_id) {
     });
 };
 
+exports.checkRedis = function() {
+    return new Promise(function(resolve, reject) {
+        client.get('wrong', function(err, data) {
+            if(err) {
+                reject(err);
+            }
+            else {
+                resolve(data);
+            }
+        });
+    });
+};
 
-// exports.wrongPassword = function() {
-//     client.get('wrong', function(err,data) {
-//         if(err) {
-//             console.log(err);
-//         }
-//         else if (data) {
-//             var num = JSON.parse(data);
-//             if (num<3) {
-//                 client.setex('wrong', 60, JSON.stringify(num+1), function(err, data) {
-//                     if (err) {
-//                         return console.log(err);
-//                     }
-//                 });
-//             }
-//             else {
-//                 client.setex('wrong', 90*(Math.pow(2, num-3)), JSON.stringify(num+1), function(err, data) {
-//                     if (err) {
-//                         return console.log(err);
-//                     }
-//                 });
-//             }
-//         }
-//         else {
-//             client.setex('wrong', 60, JSON.stringify(1), function(err, data) {
-//                 if (err) {
-//                     return console.log(err);
-//                 }
-//             });
-//         }
-//     })
-// }
-//
+exports.wrongPassword = function() {
+    client.get('wrong', function(err,data) {
+        if(err) {
+            console.log(err);
+        }
+        else if (data) {
+            var num = JSON.parse(data);
+            num+=1;
+            if (num<3) {
+                client.setex('wrong', 60, JSON.stringify(num), function(err, data) {
+                    if (err) {
+                        console.log(err);
+                    }
+                    else {
+                        console.log(data);
+                    }
+                });
+            }
+            else {
+                client.ttl('wrong', function(err, data) {
+                    if(err) {
+                        console.log(err);
+                    }
+                    else {
+                        var temp=data+90*(Math.pow(2, num-3));
+                        console.log('time left is ' + temp);
+                        console.log('number of failed trials is ' + num);
+                        client.setex('wrong', temp, JSON.stringify(num), function(err, data) {
+                            if (err) {
+                                console.log(err);
+                            }
+                            else {
+                                console.log(data);
+                            }
+                        });
+                    }
+                });
+            }
+        }
+        else {
+            client.setex('wrong', 60, JSON.stringify(1), function(err, data) {
+                if (err) {
+                    console.log(err);
+                }
+                else {
+                    console.log('data in the first');
+                    console.log(data);
+                }
+            });
+        }
+    });
+};
+
 
 function getFromDb(str, params) {
     return new Promise(function(resolve, reject) {
