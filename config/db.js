@@ -42,12 +42,6 @@ exports.countSigners = function () {
     });
 };
 
-// exports.showSigners = function () {
-//     return getFromDb("SELECT firstname, lastname FROM signatures").then(function(result) {
-//         var results=result.rows;
-//         return results;
-//     });
-// };
 
 exports.showSignature = function (temp) {
     return getFromDb('SELECT * FROM signatures WHERE user_id=$1', [temp]).then(function(result) {

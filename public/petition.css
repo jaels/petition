@@ -8,13 +8,13 @@
 #canv {
     position: relative;
     border: 2px solid black;
-    margin-top: 0;
     left:5%;
 }
 
 
 #submit {
     position: relative;
+    cursor: pointer;
     height:150px;
     width:150px;
     left:5%;
@@ -160,6 +160,7 @@ body {
 
 #edit-profile {
     position: absolute;
+    cursor: pointer;
     bottom: 14%;
     left:12%;
 }
@@ -171,6 +172,7 @@ body {
 
 #delete-signature {
     position: absolute;
+    cursor: pointer;
     bottom: 18%;
     left:12%;
 }
