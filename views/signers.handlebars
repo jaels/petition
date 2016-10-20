@@ -4,7 +4,8 @@
 {{#each results}}
 <ul id="signers">
 <li>
-<a href="{{homepage}}">{{firstname}} {{lastname}}</a>
+{{#if homepage}} <a href="{{homepage}}">{{firstname}} {{lastname}}</a>
+{{else}} {{firstname}} {{lastname}} {{/if}}
 
 {{#if age}} | Age: {{age}} {{/if}}
 
