@@ -206,8 +206,6 @@ router.get('/petition/form', function(req, res) {
 });
 
 router.post('/signing', function(req,res) {
-    var firstname = req.session.user.firstname;
-    var lastname = req.session.user.lastname;
     var sign = req.body.signature;
     var userId = req.session.user.id;
 
@@ -293,10 +291,16 @@ router.get('/petition/signers/:city', function(req,res) {
 });
 
 router.get('/petition/logout', function(req,res) {
-    req.session = null;
-    res.render('loged-out' , {
-        layout: 'main'
-    });
+    req.session.destroy(function(err) {
+        if (err) {
+            console.log(err);
+        }
+        else {
+            res.render('loged-out' , {
+                layout: 'main'
+            });
+        }
+    })
 });
 
 router.get('/petition/edit', function(req, res) {

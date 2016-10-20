@@ -1,6 +1,4 @@
 
-
-
 var express = require('express');
 var app = express();
 var hb = require('express-handlebars');
@@ -15,6 +13,10 @@ var csrfProtection = csrf({ cookie: true });
 
 var bodyParser = require('body-parser');
 
+var session = require('express-session');
+var Store = require('connect-redis')(session);
+
+
 client.connect(function(err) {
     console.log(err);
 });
@@ -24,13 +26,26 @@ app.use(bodyParser.urlencoded({
     extended: false
 }));
 app.use(require('cookie-parser')());
+
+
+
+app.use(session({
+    store: new Store({
+        ttl: 3600,
+        host: 'localhost',
+        port: 6379
+    }),
+    resave: false,
+    saveUninitialized: true,
+    secret: 'my super fun secret'
+}));
+
+
+
+
 app.engine('handlebars', hb());
 app.set('view engine', 'handlebars');
 
-app.use(cookieSession({
-    secret: 'ssss',
-    maxAge: 1000 * 60 * 60 * 24 * 14
-}));
 
 app.use(csrfProtection);
 

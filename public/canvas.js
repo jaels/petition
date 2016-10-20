@@ -9,7 +9,6 @@
     var prevY;
     var dataURL;
 
-    getOffset(canv);
     function getOffset(canv) {
         offLeft = 0;
         offTop = 0;
@@ -21,6 +20,7 @@
     }
 
     canv.addEventListener('mousedown', function() {
+        getOffset(canv);
         prevX = event.clientX-offLeft;
         prevY = event.clientY-offTop;
         canv.addEventListener("mousemove", move);
@@ -52,15 +52,6 @@
             alert('You need to fill all the fields');
         }
     });
-
-    // document.getElementById('sign-in-botton').addEventListener('click', function(e) {
-    //     console.log('heyyy');
-    //     if(!(document.getElementById('user-first-name').value)||!(document.getElementById('user-last-name').value)|| !(document.getElementById('user-email').value)|| !(document.getElementById('user-password').value)){                             e.preventDefault();
-    //         alert('You need to fill all the fields');
-    //     }
-    // });
-
-
 
 
 }());
