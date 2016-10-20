@@ -11,7 +11,6 @@
     var dataURL;
 
 
-    getOffset(canv);
 
     function getOffset(canv) {
         offLeft = 0;

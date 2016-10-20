@@ -307,12 +307,12 @@ router.post('/petition/updating', function(req, res) {
     var city=req.body.city.toUpperCase();
     var homepage=req.body.homepage;
     var user_id=req.session.user.id;
-    req.session.user.firstname=req.body.firstname;
-    req.session.user.lastname=req.body.lastname;
-    req.session.user.email=req.body.email;
-    req.session.user.age=req.body.age;
-    req.session.user.city=req.body.city;
-    req.session.user.homepage=req.body.homepage;
+    req.session.user.firstname=firstname;
+    req.session.user.lastname=lastname;
+    req.session.user.email=email;
+    req.session.user.age=age;
+    req.session.user.city=city;
+    req.session.user.homepage=homepage;
 
 
     if(password.length>0) {

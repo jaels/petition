@@ -67,7 +67,9 @@ exports.getTheInfo = function() {
 
         return result;
     }).catch(function(err){
-        console.log(err);
+        if (err) {
+            console.log(err);
+        }
     })
 };
 
@@ -88,12 +90,16 @@ exports.updateData = function(firstname,lastname,email,user_id) {
 exports.updateMoreData = function(age, city, homepage, user_id) {
     return getFromDb('SELECT * FROM user_profiles WHERE user_id=$1', [user_id]).then(function(result) {
         if(result.rows.length>0) {
+            console.log('just updating');
             getFromDb('UPDATE user_profiles SET (age,city,homepage)=($1,$2,$3) WHERE user_id=$4 RETURNING id', [age,city,homepage,user_id]);
         }
         else {
+            console.log('inserting');
             getFromDb('INSERT into user_profiles (age,city,homepage,user_id) VALUES ($1,$2,$3,$4) RETURNING id', [age,city, homepage, user_id]);
         }
-    });
+    }).catch(function(err) {
+        console.log(err);
+    })
 
 };
 
