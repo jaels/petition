@@ -99,8 +99,7 @@ exports.updateMoreData = function(age, city, homepage, user_id) {
         }
     }).catch(function(err) {
         console.log(err);
-    })
-
+    });
 };
 
 

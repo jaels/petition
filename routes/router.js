@@ -139,7 +139,6 @@ router.post('/check-user', function(req,res) {
                         }
                     });
                 }
-
                 else {
                     res.send('Wrong password, try again');
                 }
@@ -150,7 +149,6 @@ router.post('/check-user', function(req,res) {
         res.render('error' , {
             layout: 'main'
         });
-
     });
 });
 
@@ -188,10 +186,7 @@ router.get('/petition/form', function(req, res) {
             layout: 'main',
             csrfToken: req.csrfToken()
         });
-
     }
-
-
 });
 
 router.post('/signing', function(req,res) {
@@ -231,8 +226,6 @@ router.get('/petition/thanks', function(req, res) {
         });
     }
 });
-
-
 
 
 router.get('/petition/signers',function(req, res) {
@@ -313,7 +306,6 @@ router.post('/petition/updating', function(req, res) {
     req.session.user.age=age;
     req.session.user.city=city;
     req.session.user.homepage=homepage;
-
 
     if(password.length>0) {
         hashPassword(password).then(function(hash){
